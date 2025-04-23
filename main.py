@@ -1,0 +1,83 @@
+from fastapi import FastAPI, HTTPException, Depends
+from typing import List
+import models, schemas, crud, embedding_model
+from database import SessionLocal, engine, Base
+from sqlalchemy.orm import Session
+import numpy as np
+from fastapi.middleware.cors import CORSMiddleware
+# create DB tables
+Base.metadata.create_all(bind=engine)
+
+app = FastAPI(title="ArXiv Physics Embeddings API")
+
+def get_db():
+    db = SessionLocal()
+    try:
+        yield db
+    finally:
+        db.close()
+
+@app.post("/embed/", response_model=List[schemas.Paper])
+def create_embeddings(query: str, max_results: int = 10, db: Session = Depends(get_db)):
+    papers = embedding_model.fetch_papers(query, max_results)
+    created_papers = []
+    for p in papers:
+        existing = crud.get_paper_by_arxiv_id(db, p.entry_id)
+        if existing:
+            continue
+        emb = embedding_model.compute_embedding(p.title + " " + p.summary)
+        paper_in = schemas.PaperCreate(
+            title=p.title,
+            abstract=p.summary,
+            arxiv_id=p.entry_id,
+            link=p.entry_id,
+            embedding=emb,
+            authors=[a.name for a in p.authors]
+        )
+        db_paper = crud.create_paper(db, paper_in)
+        if db_paper:
+            created_papers.append(db_paper)
+    if not created_papers:
+        raise HTTPException(status_code=400, detail="No new papers to embed")
+    return created_papers
+
+@app.get("/papers/", response_model=List[schemas.Paper])
+def read_papers(skip: int = 0, limit: int = 100, db: Session = Depends(get_db)):
+    return crud.get_papers(db, skip, limit)
+
+@app.get("/authors/", response_model=List[schemas.Author])
+def read_authors(skip: int = 0, limit: int = 100, db: Session = Depends(get_db)):
+    return crud.get_authors(db, skip, limit)
+
+@app.get("/search/", response_model=List[schemas.PaperSummary])
+def search_papers(query: str, top: int = 5, db: Session = Depends(get_db)):
+    """
+    Semantic search: compute embedding for the query and return top matching papers
+    by cosine similarity of embeddings.
+    """
+    # compute query embedding
+    query_emb = embedding_model.compute_embedding(query)
+    # fetch all stored papers
+    papers = crud.get_papers(db)
+    if not papers:
+        raise HTTPException(status_code=404, detail="No papers in database")
+    # compute cosine similarities
+    q = np.array(query_emb)
+    scores = []
+    for p in papers:
+        emb = np.array(p.embedding)
+        sim = float(np.dot(q, emb) / (np.linalg.norm(q) * np.linalg.norm(emb)))
+        scores.append((p, sim))
+    # sort by similarity score
+    scores.sort(key=lambda x: x[1], reverse=True)
+    top_papers = [p for p, _ in scores[:top]]
+    if not top_papers:
+        raise HTTPException(status_code=404, detail="No matching papers found")
+    return top_papers
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["http://localhost:4200"],  # or ["*"] in dev
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
