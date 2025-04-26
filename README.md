@@ -1,27 +1,69 @@
-# SCIMLbot
 
-This project was generated with [Angular CLI](https://github.com/angular/angular-cli) version 14.1.2.
 
-## Development server
+# SCIMLbot Project 🚀
 
-Run `ng serve` for a dev server. Navigate to `http://localhost:4200/`. The application will automatically reload if you change any of the source files.
+This project includes two services:
+- **Frontend (UI)** – Angular app
+- **Backend (BE)** – FastAPI app
 
-## Code scaffolding
+Both are containerized using Docker and orchestrated via Docker Compose.
 
-Run `ng generate component component-name` to generate a new component. You can also use `ng generate directive|pipe|service|class|guard|interface|enum|module`.
+---
 
-## Build
+## Getting Started
 
-Run `ng build` to build the project. The build artifacts will be stored in the `dist/` directory.
+1. Clone the repositories and **checkout correct branches**:
 
-## Running unit tests
+```bash
+git clone -b <ui-branch> https://github.com/cs-surya/SCIML.git SCIMLbot-ui
+git clone -b <be-branch> https://github.com/your-org/SCIbot-UI.git SCIMLbot-be
 
-Run `ng test` to execute the unit tests via [Karma](https://karma-runner.github.io).
 
-## Running end-to-end tests
 
-Run `ng e2e` to execute the end-to-end tests via a platform of your choice. To use this command, you need to first add a package that implements end-to-end testing capabilities.
+2. Build and run everything:
 
-## Further help
+```bash
+docker-compose up --build
+```
 
-To get more help on the Angular CLI use `ng help` or go check out the [Angular CLI Overview and Command Reference](https://angular.io/cli) page.
+- Frontend: [http://localhost:8080](http://localhost:8080)
+- Backend: [http://localhost:8000](http://localhost:8000)
+
+---
+
+## Common Issues
+
+**CORS Errors:**  
+Add CORS middleware in FastAPI:
+
+```python
+from fastapi.middleware.cors import CORSMiddleware
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+```
+
+**Nginx Default Page Issue:**  
+Make sure Dockerfile copies the correct Angular build output:
+
+```dockerfile
+COPY --from=build /app/dist/<your-angular-app-name>/ /usr/share/nginx/html
+```
+Replace `<your-angular-app-name>` with the actual folder name under `dist/`.
+
+---
+
+## Quick Reset Commands
+
+```bash
+docker-compose down --rmi local -v
+docker-compose up --build
+```
+
+---
+
