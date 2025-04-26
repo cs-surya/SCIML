@@ -1,0 +1,138 @@
+/* ─── src/app/chat/chat.component.css ─── */
+:root {
+  --bg-shell:   #1e1e1e;  /* phone frame */
+  --bg-chat:    #2a2f32;  /* chat background */
+  --bg-bot:     #2f3437;  /* bot bubble */
+  --bg-user:    #005c4b;  /* user bubble */
+  --bg-input:   #262b2d;  /* input area */
+  --text-light: #e1e1e1;
+  --accent:     #00a884;  /* send button & links */
+  --border:     #3a3f42;
+}
+
+.chat-wrapper {
+  width: 360px;
+  height: 600px;
+  background: var(--bg-shell);
+  border-radius: 12px;
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.5);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.chat-container {
+  flex: 1;
+  background: var(--bg-chat);
+  padding: 12px;
+  overflow-y: auto;
+}
+
+.message {
+  display: flex;
+  margin-bottom: 10px;
+}
+
+.message.bot  { justify-content: flex-start; }
+.message.user { justify-content: flex-end;   }
+
+.bubble {
+  max-width: 75%;
+  padding: 8px 12px;
+  border-radius: 8px;
+  line-height: 1.4;
+  word-wrap: break-word;
+  font-size: 0.95rem;
+}
+
+/* Bot bubble */
+.bot .bubble {
+  background: var(--bg-bot);
+  color: var(--text-light);
+  border-top-left-radius: 0;
+}
+
+/* User bubble */
+.user .bubble {
+  background: var(--bg-user);
+  color: var(--text-light);
+  border-top-right-radius: 0;
+}
+
+/* Results wrapper stays transparent-ish */
+.bubble.results {
+  background: transparent;
+  padding: 0;
+}
+
+/* Paper cards */
+.paper-card {
+  background: var(--bg-bot);
+  border-radius: 6px;
+  padding: 8px;
+  margin-bottom: 6px;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.4);
+}
+
+.paper-title {
+  display: block;
+  font-weight: 600;
+  font-size: 0.95rem;
+  color: var(--accent);
+  text-decoration: none;
+  margin-bottom: 4px;
+}
+
+.paper-title:hover {
+  text-decoration: underline;
+}
+
+.paper-meta {
+  font-size: 0.8em;
+  color: #a0a0a0;
+  margin-bottom: 6px;
+}
+
+.paper-summary {
+  font-size: 0.9em;
+  color: var(--text-light);
+  margin: 0;
+}
+
+/* Input area */
+.input-area {
+  display: flex;
+  align-items: center;
+  padding: 8px;
+  background: var(--bg-input);
+  border-top: 1px solid var(--border);
+}
+
+.input-area textarea {
+  flex: 1;
+  resize: none;
+  border: none;
+  outline: none;
+  padding: 8px;
+  border-radius: 6px;
+  background: #32373a;
+  color: var(--text-light);
+  font-size: 1rem;
+  margin-right: 8px;
+}
+
+.input-area button {
+  padding: 8px 12px;
+  border: none;
+  border-radius: 6px;
+  background: var(--accent);
+  color: var(--bg-shell);
+  font-weight: bold;
+  cursor: pointer;
+}
+
+.input-area button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+/* ───────────────────────────────────────── */

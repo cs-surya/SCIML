@@ -1,0 +1,21 @@
+<div class="chat-wrapper">
+  <div #scrollContainer class="chat-container">
+    <div *ngFor="let msg of messages" class="message" [ngClass]="msg.from">
+      <ng-container [ngSwitch]="msg.type">
+        <div *ngSwitchCase="'text'" class="bubble">{{ msg.text }}</div>
+        <div *ngSwitchCase="'results'" class="bubble results">
+          <div *ngIf="loading" class="loading">⏳ fetching…</div>
+          <div *ngFor="let p of msg.results" class="paper-card">
+            <a [href]="p.link" target="_blank" class="paper-title">{{ p.title }}</a>
+            <div class="paper-meta">{{ p.authors }}</div>
+            <p class="paper-summary">{{ p.abstract }}</p>
+          </div>
+        </div>
+      </ng-container>
+    </div>
+  </div>
+  <div class="input-area">
+    <textarea [(ngModel)]="input" (keydown)="onEnter($event)" placeholder="Type a message…" [disabled]="loading"></textarea>
+    <button (click)="sendMessage()" [disabled]="loading || !input.trim()">{{ loading ? '...' : 'Send' }}</button>
+  </div>
+</div>
