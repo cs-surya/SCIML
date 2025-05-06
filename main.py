@@ -1,14 +1,25 @@
 from fastapi import FastAPI, HTTPException, Depends
 from typing import List
-import models, schemas, crud, embedding_model
+import numpy as np
+
+import embedding_model
+import crud
+import schemas
 from database import SessionLocal, engine, Base
 from sqlalchemy.orm import Session
-import numpy as np
 from fastapi.middleware.cors import CORSMiddleware
+
 # create DB tables
 Base.metadata.create_all(bind=engine)
 
 app = FastAPI(title="ArXiv Physics Embeddings API")
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 def get_db():
     db = SessionLocal()
@@ -18,12 +29,15 @@ def get_db():
         db.close()
 
 @app.post("/embed/", response_model=List[schemas.Paper])
-def create_embeddings(query: str, max_results: int = 10, db: Session = Depends(get_db)):
+def create_embeddings(
+    query: str,
+    max_results: int = 10,
+    db: Session = Depends(get_db)
+):
     papers = embedding_model.fetch_papers(query, max_results)
-    created_papers = []
+    created = []
     for p in papers:
-        existing = crud.get_paper_by_arxiv_id(db, p.entry_id)
-        if existing:
+        if crud.get_paper_by_arxiv_id(db, p.entry_id):
             continue
         emb = embedding_model.compute_embedding(p.title + " " + p.summary)
         paper_in = schemas.PaperCreate(
@@ -36,48 +50,72 @@ def create_embeddings(query: str, max_results: int = 10, db: Session = Depends(g
         )
         db_paper = crud.create_paper(db, paper_in)
         if db_paper:
-            created_papers.append(db_paper)
-    if not created_papers:
-        raise HTTPException(status_code=400, detail="No new papers to embed")
-    return created_papers
+            created.append(db_paper)
+
+    if not created:
+        raise HTTPException(400, "No new papers to embed")
+    return created
 
 @app.get("/papers/", response_model=List[schemas.Paper])
-def read_papers(skip: int = 0, limit: int = 100, db: Session = Depends(get_db)):
+def read_papers(
+    skip: int = 0,
+    limit: int = 100,
+    db: Session = Depends(get_db)
+):
     return crud.get_papers(db, skip, limit)
 
-@app.get("/authors/", response_model=List[schemas.Author])
-def read_authors(skip: int = 0, limit: int = 100, db: Session = Depends(get_db)):
-    return crud.get_authors(db, skip, limit)
-
 @app.get("/search/", response_model=List[schemas.PaperSummary])
-def search_papers(query: str, top: int = 5, db: Session = Depends(get_db)):
-    """
-    Semantic search: compute embedding for the query and return top matching papers
-    by cosine similarity of embeddings.
-    """
-    # compute query embedding
-    query_emb = embedding_model.compute_embedding(query)
-    # fetch all stored papers
-    papers = crud.get_papers(db)
-    if not papers:
-        raise HTTPException(status_code=404, detail="No papers in database")
-    # compute cosine similarities
-    q = np.array(query_emb)
-    scores = []
-    for p in papers:
-        emb = np.array(p.embedding)
-        sim = float(np.dot(q, emb) / (np.linalg.norm(q) * np.linalg.norm(emb)))
-        scores.append((p, sim))
-    # sort by similarity score
-    scores.sort(key=lambda x: x[1], reverse=True)
-    top_papers = [p for p, _ in scores[:top]]
-    if not top_papers:
-        raise HTTPException(status_code=404, detail="No matching papers found")
-    return top_papers
+def search_papers(
+    query: str,
+    top: int = 5,
+    min_score: float = 0.0,
+    db: Session = Depends(get_db)
+):
+    def _cosine_search() -> List[tuple]:
+        papers = crud.get_papers(db)
+        q_emb = np.array(embedding_model.compute_embedding(query))
+        scored = []
+        for p in papers:
+            emb = np.array(p.embedding)
+            sim = float(q_emb.dot(emb) / (np.linalg.norm(q_emb) * np.linalg.norm(emb)))
+            if sim >= min_score:
+                scored.append((p, sim))
+        scored.sort(key=lambda x: x[1], reverse=True)
+        return scored[:top]
 
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=["http://localhost:4200"],  # or ["*"] in dev
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
+    # 1) first pass
+    hits = _cosine_search()
+
+    # 2) if no hits above threshold, ingest new papers and retry
+    if not hits:
+        new_papers = embedding_model.fetch_papers(query, max_results=10)
+        for p in new_papers:
+            if crud.get_paper_by_arxiv_id(db, p.entry_id):
+                continue
+            emb = embedding_model.compute_embedding(p.title + " " + p.summary)
+            paper_in = schemas.PaperCreate(
+                title=p.title,
+                abstract=p.summary,
+                arxiv_id=p.entry_id,
+                link=p.entry_id,
+                embedding=emb,
+                authors=[a.name for a in p.authors]
+            )
+            crud.create_paper(db, paper_in)
+
+        hits = _cosine_search()
+
+    if not hits:
+        raise HTTPException(404, "No matching papers found even after ingest")
+
+    # 3) format response
+    return [
+        schemas.PaperSummary(
+            title=paper.title,
+            abstract=paper.abstract,
+            arxiv_id=paper.arxiv_id,
+            link=paper.link,
+            score=score
+        )
+        for paper, score in hits
+    ]

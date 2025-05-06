@@ -36,6 +36,7 @@ class PaperSummary(BaseModel):
     abstract: str
     arxiv_id: str
     link: str
+    score: float
 
     class Config:
         orm_mode = True
