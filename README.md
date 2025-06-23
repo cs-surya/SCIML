@@ -80,11 +80,5 @@ This project allows users to:
 | GET    | `/docs`    | OpenAPI/Swagger UI                   |
 
 
-| Layer    | Tech                  |
-| -------- | --------------------- |
-| Frontend | \[React/Vue/etc.]     |
-| Backend  | FastAPI, SQLAlchemy   |
-| ML Model | Sentence Transformers |
-| Data     | arXiv API             |
-| DB       | SQLite / PostgreSQL   |
 
+Tech used: FastAPI, Python, Sentence Transformers, SQLAlchemy, React, arXiv API
