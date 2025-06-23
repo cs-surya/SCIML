@@ -1,69 +1,88 @@
+# 🤖 SCIML AI Bot – Semantic Search + Chat UI (Microservices)
 
-
-# SCIMLbot Project 🚀
-
-This project includes two services:
-- **Frontend (UI)** – Angular app
-- **Backend (BE)** – FastAPI app
-
-Both are containerized using Docker and orchestrated via Docker Compose.
+An AI-powered microservice-based app that lets users **chat naturally** and **search academic papers** from [arXiv.org](https://arxiv.org) using **semantic similarity and embeddings**.
 
 ---
 
-## Getting Started
+## 💡 What This Does
 
-1. Clone the repositories and **checkout correct branches**:
+This project allows users to:
 
-```bash
-git clone -b <ui-branch> https://github.com/cs-surya/SCIML.git SCIMLbot-ui
-git clone -b <be-branch> https://github.com/your-org/SCIbot-UI.git SCIMLbot-be
-
-
-
-2. Build and run everything:
-
-```bash
-docker-compose up --build
-```
-
-- Frontend: [http://localhost:8080](http://localhost:8080)
-- Backend: [http://localhost:8000](http://localhost:8000)
+- 🔍 Search for relevant academic papers by **topic or question**, not just keywords.
+- 💬 Use a **chat-style UI** to interact with an AI assistant.
+- 🤖 Retrieve titles, abstracts, authors, and direct links to papers using a semantic model.
+- 📦 Works across **two microservices**: a FastAPI-based ML backend and a frontend chat interface.
 
 ---
 
-## Common Issues
+## ⚙️ Microservice Architecture
+[ User Chat UI ] <--> [ FastAPI API Microservice ] <--> [ arXiv + Embedding Model ]
 
-**CORS Errors:**  
-Add CORS middleware in FastAPI:
 
-```python
-from fastapi.middleware.cors import CORSMiddleware
+### 🧩 Microservices Breakdown:
 
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=["*"],
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
-```
+#### 1️⃣ **Frontend (Chat UI)**
+- WhatsApp-style UI
+- Sends user queries to backend
+- Displays matching paper results like chat replies
 
-**Nginx Default Page Issue:**  
-Make sure Dockerfile copies the correct Angular build output:
-
-```dockerfile
-COPY --from=build /app/dist/<your-angular-app-name>/ /usr/share/nginx/html
-```
-Replace `<your-angular-app-name>` with the actual folder name under `dist/`.
+#### 2️⃣ **Backend (FastAPI API)**
+- Fetches papers from arXiv based on the query
+- Generates embeddings for papers and query
+- Computes cosine similarity and returns top matches
 
 ---
 
-## Quick Reset Commands
+## 📸 Demo Screenshots
 
-```bash
-docker-compose down --rmi local -v
-docker-compose up --build
-```
+### 🔍 1. Chat Interface (WhatsApp-style)
+<img src="[Screenshot 2025-04-23 at 01.31.30.png](https://github.com/cs-surya/SCIML/blob/main/Screenshot%202025-04-23%20at%2001.31.30.png)" alt="Chat UI" width="600">
+
+### 📊 2. FastAPI Swagger Docs
+<img src="[screenshots/api-docs.png](https://github.com/cs-surya/SCIML/blob/main/Screenshot%202025-04-23%20at%2001.31.52.png)" alt="FastAPI Swagger UI" width="600">
+
+### 📄 3. JSON API Output
+<img src="[screenshots/api-result.png](https://github.com/cs-surya/SCIML/blob/main/Screenshot%202025-04-23%20at%2001.32.14.png)" alt="JSON Output Example" width="600">
+
+> Make sure you place your `.png` files in a `/screenshots` folder at the root of your repo.
 
 ---
+
+## 🚀 Demo Flow (How It Works)
+
+1. You ask something like:  
+   `"Show me recent papers on black hole thermodynamics"`
+
+2. The backend:
+   - Fetches arXiv papers
+   - Generates embeddings for each paper's title + abstract
+   - Compares with your query using **cosine similarity**
+
+3. Returns top matching results like:
+```json
+[
+  {
+    "title": "Black Hole Thermodynamics and Quantum Gravity",
+    "abstract": "We study the thermodynamic behavior of black holes...",
+    "score": 0.92,
+    "link": "https://arxiv.org/abs/2305.12345"
+  }
+]
+4. The chat UI displays these results in a human-friendly way.
+
+| Method | Endpoint   | Description                          |
+| ------ | ---------- | ------------------------------------ |
+| POST   | `/embed/`  | Embed and store new arXiv papers     |
+| GET    | `/papers/` | List stored papers from the database |
+| GET    | `/search/` | Search for papers by semantic query  |
+| GET    | `/docs`    | OpenAPI/Swagger UI                   |
+
+
+| Layer    | Tech                  |
+| -------- | --------------------- |
+| Frontend | \[React/Vue/etc.]     |
+| Backend  | FastAPI, SQLAlchemy   |
+| ML Model | Sentence Transformers |
+| Data     | arXiv API             |
+| DB       | SQLite / PostgreSQL   |
 
