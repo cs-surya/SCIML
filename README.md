@@ -36,13 +36,13 @@ This project allows users to:
 ## 📸 Demo Screenshots
 
 ### 🔍 1. Chat Interface (WhatsApp-style)
-<img src="[Screenshot 2025-04-23 at 01.31.30.png](https://github.com/cs-surya/SCIML/blob/main/Screenshot%202025-04-23%20at%2001.31.30.png)" alt="Chat UI" width="600">
+<img src="welcome.png" alt="Chat UI" width="600">
 
-### 📊 2. FastAPI Swagger Docs
-<img src="[screenshots/api-docs.png](https://github.com/cs-surya/SCIML/blob/main/Screenshot%202025-04-23%20at%2001.31.52.png)" alt="FastAPI Swagger UI" width="600">
+### 📊 2. Search research papers
+<img src="search.png" alt="FastAPI Swagger UI" width="600">
 
-### 📄 3. JSON API Output
-<img src="[screenshots/api-result.png](https://github.com/cs-surya/SCIML/blob/main/Screenshot%202025-04-23%20at%2001.32.14.png)" alt="JSON Output Example" width="600">
+### 📄 3. Goodbye
+<img src="cya.png" alt="JSON Output Example" width="600">
 
 > Make sure you place your `.png` files in a `/screenshots` folder at the root of your repo.
 
