@@ -44,7 +44,7 @@ This project allows users to:
 ### 📄 3. Goodbye
 <img src="cya.png" alt="JSON Output Example" width="600">
 
-> Make sure you place your `.png` files in a `/screenshots` folder at the root of your repo.
+
 
 ---
 
@@ -69,6 +69,8 @@ This project allows users to:
   }
 ]
 4. The chat UI displays these results in a human-friendly way.
+
+
 
 | Method | Endpoint   | Description                          |
 | ------ | ---------- | ------------------------------------ |
